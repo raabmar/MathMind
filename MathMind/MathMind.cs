@@ -15,8 +15,6 @@ namespace MathMind
 		{
 			Log.Debug ("Setup()");
 
-
-
 			// The CubeSet represents the set of all connected cubes.  Each Cube
 			// object represents a physical cube. Here we iterate over all the cubes
 			// and draw on the displays of each one.
@@ -38,7 +36,7 @@ namespace MathMind
 				int y = 24;
 				int width = 80;
 				int height = 80;
-				color = new Color (36, 182, 255);
+				color = new Color (100, 182, 255);
 				cube.FillRect (color, x, y, width, height);
 
 				// ### Paint ###
