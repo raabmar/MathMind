@@ -7,7 +7,7 @@ namespace MathMind
 	{
 
 		override public int FrameRate {
-			get { return 20; }
+			get { return 1; }
 		}
 
 		// called during intitialization, before the game has started to run
@@ -53,6 +53,44 @@ namespace MathMind
 		override public void Tick ()
 		{
 			Log.Debug ("Tick()");
+			String tFirstOperand = "1";
+			String tSecondOperand = "2";
+			String tThirdOperand = "3";
+			String tFirstOperator = "+";
+			String tSecondOperator = "*";
+			Log.Debug (calcResult(tFirstOperand,tFirstOperator,tSecondOperand,tSecondOperator,tThirdOperand).ToString());
+		}
+
+		private int calcResult(string firstOperand, string firstOperator, string secondOperand, string secondOperator, string thirdOperand) {
+			int firstIntOperand = int.Parse (firstOperand);
+			int secondIntOperand = int.Parse (secondOperand);
+			int thirdIntOperand = int.Parse (thirdOperand);
+			int temp = 0;
+
+			//punkt-vor-strich-check beim secondOperator. sonst nach der reihe auswerten
+			if (secondOperator == "*" || secondOperator == "/") {
+				temp = calcNeighbors (secondIntOperand, secondOperator, thirdIntOperand);
+				temp = calcNeighbors (firstIntOperand, firstOperator, temp);
+				return temp;
+			} else {
+				temp = calcNeighbors (firstIntOperand, firstOperator, secondIntOperand);
+				temp = calcNeighbors (temp, secondOperator, thirdIntOperand);
+				return temp;
+			}
+		}
+
+
+		private int calcNeighbors(int first, string action, int second) {
+			if (action == "+")
+				return first + second;
+			else if (action == "-")
+				return first - second;
+			else if (action == "*")
+				return first * second;
+			else if (action == "/")
+				return first / second;
+			else
+				return int.MinValue;
 		}
 
 		// development mode only
