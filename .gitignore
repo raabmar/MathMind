@@ -1,11 +1,8 @@
-CMakeCache.txt
-CMakeFiles
-Makefile
+
 cmake_install.cmake
 install_manifest.txt
 
 
-Makefile
 *.tags
 .codelite/.tern-port
 .codelite/colormind.session
