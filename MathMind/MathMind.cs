@@ -43,14 +43,28 @@ namespace MathMindSpace {
 			// Load up the list of images.
 			mImageNames = LoadImageIndex();
 
-			// Loop through all the cubes and set them up.
+			// Load up the list of games.
+			ArrayList mGame1 = new ArrayList ("8", "plus", "7", "mult", "3", "res29");
+			ArrayList mGame2 = new ArrayList ("6", "mult", "7", "mult", "2", "res84");
+			ArrayList mGame3 = new ArrayList ("4", "mult", "5", "minus", "2", "res18");
+			ArrayList mGame4 = new ArrayList ("6", "plus", "4", "mult", "8", "res38");
+			ArrayList mGame5 = new ArrayList ("9", "mult", "7", "div", "3", "res21");
+			ArrayList mGame6 = new ArrayList ("5", "mult", "7", "plus", "8", "res43");
+			ArrayList mGame7 = new ArrayList ("6", "div", "2", "mult", "4", "res12");
+			ArrayList mGame8 = new ArrayList ("5", "div", "1", "plus", "9", "res14");
+			ArrayList mGame9 = new ArrayList ("3", "mult", "8", "mult", "4", "res96");
+
+			ArrayList mGamesArray = new ArrayList (mGame1, mGame2, mGame3, mGame4, mGame5, mGame6, mGame7, mGame8, mGame9);
+
+			int cnt = 0;
 			foreach (Cube cube in CubeSet) {
 
 				// Create a wrapper object for each cube. The wrapper object allows us
 				// to bundle a cube with extra information and behavior.
 				CubeWrapper wrapper = new CubeWrapper(this, cube, 'o');
 				mWrappers.Add(wrapper); // add wrapper including individual cube into wrapper-list
-				wrapper.DrawSlide();
+				wrapper.DrawSlide(mGame1[cnt][0]);
+				cnt++;
 			}
 
 
@@ -137,7 +151,7 @@ namespace MathMindSpace {
 			}
 
 
-
+			//TODO: Siegüberprüfung:
 			Cube[] row = CubeHelper.FindRow(CubeSet);
 			if (row.Length == totalCubes) {
 				Log.Debug ("6 connected");
@@ -413,7 +427,7 @@ namespace MathMindSpace {
 		// This method draws the current image to the cube's display. The
 		// Cube.Image method has a lot of arguments, but many of them are optional
 		// and have reasonable default values.
-		public void DrawSlide() {
+		public void DrawSlide(String name=this.mApp.mImageNames[this.mIndex]) {
 
 			// Here we specify the name of the image to draw, in this case by pulling
 			// it from the array of names we read out of the image set (see
@@ -425,7 +439,7 @@ namespace MathMindSpace {
 			//
 			// If you specify an image name that is not in the index, the Image call
 			// will be ignored.
-			String imageName = this.mApp.mImageNames[this.mIndex];
+			String imageName = name;
 
 			// You can specify the top/left point on the screen to start drawing at.
 			int screenX = mXOffset;
