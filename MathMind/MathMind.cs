@@ -25,6 +25,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Sifteo;
+using Sifteo.Util;
+
 
 namespace MathMindSpace {
 
@@ -33,6 +35,7 @@ namespace MathMindSpace {
 		public String[] mImageNames;
 		public List<CubeWrapper> mWrappers = new List<CubeWrapper>();
 		public Random mRandom = new Random();
+		public int totalCubes = 6;
 
 		// Here we initialize our app.
 		public override void Setup() {
@@ -45,7 +48,7 @@ namespace MathMindSpace {
 
 				// Create a wrapper object for each cube. The wrapper object allows us
 				// to bundle a cube with extra information and behavior.
-				CubeWrapper wrapper = new CubeWrapper(this, cube);
+				CubeWrapper wrapper = new CubeWrapper(this, cube, 'o');
 				mWrappers.Add(wrapper); // add wrapper including individual cube into wrapper-list
 				wrapper.DrawSlide();
 			}
@@ -123,15 +126,32 @@ namespace MathMindSpace {
 				// * BOTTOM = 2
 				// * RIGHT = 3
 				// * NONE = 4
-				wrapper.mRotation = (int)side1;
+				//wrapper.mRotation = (int)side1;
 				wrapper.mNeedDraw = true;
 			}
 
 			wrapper = (CubeWrapper)cube2.userData;
 			if (wrapper != null) {
-				wrapper.mRotation = (int)side2;
+				//wrapper.mRotation = (int)side2;
 				wrapper.mNeedDraw = true;
 			}
+
+
+
+			Cube[] row = CubeHelper.FindRow(CubeSet);
+			if (row.Length == totalCubes) {
+				Log.Debug ("6 connected");
+				//found = true;
+				//int lastId = -1;
+				//foreach (Cube cube in row) {
+				//					CubeWrapper wrapper = (CubeWrapper)cube.userData;
+				//					if (wrapper.mIndex < lastId)
+				//						found = false;
+				//					lastId = wrapper.mIndex;
+				//				}
+			}
+
+
 
 		}
 
@@ -149,14 +169,14 @@ namespace MathMindSpace {
 			CubeWrapper wrapper = (CubeWrapper)cube1.userData;
 			if (wrapper != null) {
 				wrapper.mScale = 1;
-				wrapper.mRotation = 0;
+				//wrapper.mRotation = 0;
 				wrapper.mNeedDraw = true;
 			}
 
 			wrapper = (CubeWrapper)cube2.userData;
 			if (wrapper != null) {
 				wrapper.mScale = 1;
-				wrapper.mRotation = 0;
+				//wrapper.mRotation = 0;
 				wrapper.mNeedDraw = true;
 			}
 		}
@@ -202,12 +222,14 @@ namespace MathMindSpace {
 			foreach (CubeWrapper wrapper in mWrappers) {
 				wrapper.Tick();
 			}
-			String tFirstOperand = "1";
-			String tSecondOperand = "2";
-			String tThirdOperand = "3";
-			String tFirstOperator = "+";
-			String tSecondOperator = "*";
-			Log.Debug (calcResult(tFirstOperand,tFirstOperator,tSecondOperand,tSecondOperator,tThirdOperand).ToString());
+
+			//Log.Debug (calcResult(tFirstOperand,tFirstOperator,tSecondOperand,tSecondOperator,tThirdOperand).ToString());
+
+			//Log.Debug (mImageNames [0] + " " + mImageNames [1] + mImageNames [2]);
+			for (var i = 0; i < mImageNames.Length; i++) {
+				Log.Debug (mImageNames[i] + ", ");
+			}
+
 		}
 
 		// ImageSet is an enumeration of your app's images. It is populated based
@@ -252,15 +274,18 @@ namespace MathMindSpace {
 		public int mYOffset = 0;
 		public int mScale = 1;
 		public int mRotation = 0;
+		public char mType;
+
 
 		// This flag tells the wrapper to redraw the current image on the cube. (See Tick, below).
 		public bool mNeedDraw = false;
 
-		public CubeWrapper(MathMind app, Cube cube) {
+		public CubeWrapper(MathMind app, Cube cube, char type) {
 			mApp = app;
 			mCube = cube;
 			mCube.userData = this;
 			mIndex = 0;
+			mType = type;
 
 			// Here we attach more event handlers for button and accelerometer actions.
 			mCube.ButtonEvent += OnButton;
@@ -276,12 +301,16 @@ namespace MathMindSpace {
 		// is true when you press down and false when you release.
 		private void OnButton(Cube cube, bool pressed) {
 			if (pressed) {
-				Log.Debug("Button pressed");
+				if (mType == 'o') {
+					Log.Debug ("Button pressed and operator -> change operator");
+				}
 			} else {
 				Log.Debug("Button released");
 
 				// Advance the image index so that the next image is drawn on this
 				// cube.
+
+				//TODO wechseln von Bilder (nur wenn Operator, nur Operatur durchschalten)
 				this.mIndex += 1;
 				if (mIndex >= mApp.mImageNames.Length) {
 					mIndex = 0;
@@ -355,6 +384,9 @@ namespace MathMindSpace {
 		private void OnShakeStopped(Cube cube, int duration) {
 			Log.Debug("Shake stop: {0}", duration);
 			mRotation = 0;
+
+			//TODO Neues Bild laden (Ziffernsturz)
+
 			mNeedDraw = true;
 		}
 
