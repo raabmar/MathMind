@@ -1,94 +1,149 @@
-
-// This demo app displays a series of images on your Sifteo cubes. Different
-// gestures trigger different actions on the images:
-//
-// * Press: Switch to the next image
-// * Neighbor: rotate the image
-// * Tilt: offset the image
-// * Shake: rotate the image randomly
-// * Flip: scale the image
-//
-// This program demonstrates the following concepts:
-//
-// * Event handling basics
-// * Cube sensor events
-// * Image drawing basics
-//
-// In addition to illustrating APIs and programming concepts, this demo can be
-// a useful utility for quickly testing graphics. Just drop your images into
-// this project's `assets/images` directory, bundle your assets in the
-// ImageHelper tool, and reload the game to check them out.
-
-// ------------------------------------------------------------------------
-
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using Sifteo;
 using Sifteo.Util;
 
 
+
+/***************************************************************************************
+ * 
+ * MathMind
+ * 
+ **************************************************************************************/
 namespace MathMindSpace {
 
 	public class MathMind : BaseApp {
 
-		public String[] mImageNames;
-		public List<CubeWrapper> mWrappers = new List<CubeWrapper>();
-		public Random mRandom = new Random();
-		public int totalCubes = 6;
+		//Examples of calculations
+		private List<List<CalcPart>> exampleCalculations = new List<List<CalcPart>>{
+			new List<CalcPart> {
+				// 8 + 7 * 3 = 29
+				new CalcPart ("8", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("7", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("3", CalculationPartType.NUMBER),
+				new CalcPart ("res92", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 6 * 7 * 2 = 84
+				new CalcPart ("6", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("7", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("2", CalculationPartType.NUMBER),
+				new CalcPart ("res84", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 4 * 5 - 2 = 18
+				new CalcPart ("4", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("5", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("2", CalculationPartType.NUMBER),
+				new CalcPart ("res18", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 6 + 4 * 8 = 38
+				new CalcPart ("6", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("4", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("8", CalculationPartType.NUMBER),
+				new CalcPart ("res38", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 9 * 7 / 3 = 21
+				new CalcPart ("9", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("7", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("3", CalculationPartType.NUMBER),
+				new CalcPart ("res21", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 5 * 7 + 8 = 43
+				new CalcPart ("5", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("7", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("8", CalculationPartType.NUMBER),
+				new CalcPart ("res43", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 6 / 2 * 4 = 12
+				new CalcPart ("2", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("4", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("6", CalculationPartType.NUMBER),
+				new CalcPart ("res21", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 5 / 1 + 9 = 14
+				new CalcPart ("5", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("9", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("1", CalculationPartType.NUMBER),
+				new CalcPart ("res14", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 3 * 8 * 4 = 96
+				new CalcPart ("3", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("8", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("4", CalculationPartType.NUMBER),
+				new CalcPart ("res96", CalculationPartType.RESULT)
+			},
+			new List<CalcPart> {
+				// 8 * 5 - 6 = 34
+				new CalcPart ("6", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("5", CalculationPartType.NUMBER),
+				new CalcPart ("quest", CalculationPartType.OPERATOR),
+				new CalcPart ("8", CalculationPartType.NUMBER),
+				new CalcPart ("res43", CalculationPartType.RESULT)
+			}
+		};
 
+
+		// Public String List ImageNames that contains all the filenames of images
+		public List<String> ImageNames { get; private set; }
+		private List<CubeWrapper> mWrappers = new List<CubeWrapper>();
+		private int totalCubes = 6;
+		private bool foundRow = false;
+		public bool calcOk = false;
+		private int calcIndex = 0;
+
+
+		// ## SETUP ##
 		// Here we initialize our app.
 		public override void Setup() {
-
+			
 			// Load up the list of images.
-			mImageNames = LoadImageIndex();
+			LoadImageFolder();
+
+			// calcIndex entspricht der Spielrunde (erste Rechnung, zweite Rechnung, etc.)
+			List<CalcPart> calculation = exampleCalculations.ElementAt(calcIndex);
 
 			// Loop through all the cubes and set them up.
-			foreach (Cube cube in CubeSet) {
+			for (int i = 0; i < totalCubes; i++) {
 
 				// Create a wrapper object for each cube. The wrapper object allows us
 				// to bundle a cube with extra information and behavior.
-				CubeWrapper wrapper = new CubeWrapper(this, cube, 'o');
+				CubeWrapper wrapper = new CubeWrapper(this, CubeSet[i]);
 				mWrappers.Add(wrapper); // add wrapper including individual cube into wrapper-list
-				wrapper.DrawSlide();
+
+				// Each cube contains a part of the entire calculation which needs to be printed
+				CalcPart part = calculation[i];
+				wrapper.SetCalcPart(part);
+
 			}
-
-
-			//*******************************************************************
-			//TEMP FIRST TEST - FillCube with Color and Rect
-			//*******************************************************************
-			// ### Color ###
-			// A Color object represents an RGB color.
-			//Color color = new Color (170, 218, 85);
-
-			// ### FillScreen ###
-			// FillScreen paints the cube's entire screen the given color.
-			//cube.FillScreen (color);
-
-			// ### FillRect ###
-			// FillRect draws a rectangle on the cube's screen at a given location
-			// in a given size and color. A cube's screen is 128x128 pixels. Here
-			// we draw a big square in the center of the screen.
-			//int x = 24;
-			//int y = 24;
-			//int width = 80;
-			//int height = 80;
-			//color = new Color (100, 182, 255);
-			//cube.FillRect (color, x, y, width, height);
-			//*******************************************************************
-
-
-
-			// ## Event Handlers ##
-			// Objects in the Sifteo API (particularly BaseApp, CubeSet, and Cube)
-			// fire events to notify an app of various happenings, including actions
-			// that the player performs on the cubes.
-			//
-			// To listen for an event, just add the handler method to the event. The
-			// handler method must have the correct signature to be added. Refer to
-			// the API documentation or look at the examples below to get a sense of
-			// the correct signatures for various events.
-			//
+				
 			// **NeighborAddEvent** and **NeighborRemoveEvent** are triggered when
 			// the player puts two cubes together or separates two neighbored cubes.
 			// These events are fired by CubeSet instead of Cube because they involve
@@ -98,6 +153,8 @@ namespace MathMindSpace {
 			CubeSet.NeighborAddEvent += OnNeighborAdd;
 			CubeSet.NeighborRemoveEvent += OnNeighborRemove;
 		}
+
+
 
 		// ## Neighbor Add ##
 		// This method is a handler for the NeighborAdd event. It is triggered when
@@ -112,48 +169,17 @@ namespace MathMindSpace {
 		private void OnNeighborAdd(Cube cube1, Cube.Side side1, Cube cube2, Cube.Side side2)  {
 			Log.Debug("Neighbor add: {0}.{1} <-> {2}.{3}", cube1.UniqueId, side1, cube2.UniqueId, side2);
 
-			CubeWrapper wrapper = (CubeWrapper)cube1.userData;
-			if (wrapper != null) {
-				// Here we set our wrapper's rotation value so that the image gets
-				// drawn with its top side pointing towards the neighbor cube.
-				//
-				// Cube.Side is an enumeration (TOP, LEFT, BOTTOM, RIGHT, NONE). The
-				// values of the enumeration can be cast to integers by counting
-				// counterclockwise:
-				//
-				// * TOP = 0
-				// * LEFT = 1
-				// * BOTTOM = 2
-				// * RIGHT = 3
-				// * NONE = 4
-				//wrapper.mRotation = (int)side1;
-				wrapper.mNeedDraw = true;
-			}
-
-			wrapper = (CubeWrapper)cube2.userData;
-			if (wrapper != null) {
-				//wrapper.mRotation = (int)side2;
-				wrapper.mNeedDraw = true;
-			}
-
-
-
-			Cube[] row = CubeHelper.FindRow(CubeSet);
-			if (row.Length == totalCubes) {
+			// Find 6 connected cubes (rotation does not matter)
+			Cube[] connected = CubeHelper.FindConnected(cube1);
+			if (connected.Length == totalCubes) {
 				Log.Debug ("6 connected");
-				//found = true;
-				//int lastId = -1;
-				//foreach (Cube cube in row) {
-				//					CubeWrapper wrapper = (CubeWrapper)cube.userData;
-				//					if (wrapper.mIndex < lastId)
-				//						found = false;
-				//					lastId = wrapper.mIndex;
-				//				}
+				foundRow = true;
+			} else {
+				foundRow = false;
 			}
-
-
-
 		}
+
+
 
 		// ## Neighbor Remove ##
 		// This method is a handler for the NeighborRemove event. It is triggered
@@ -166,43 +192,120 @@ namespace MathMindSpace {
 		private void OnNeighborRemove(Cube cube1, Cube.Side side1, Cube cube2, Cube.Side side2)  {
 			Log.Debug("Neighbor remove: {0}.{1} <-> {2}.{3}", cube1.UniqueId, side1, cube2.UniqueId, side2);
 
-			CubeWrapper wrapper = (CubeWrapper)cube1.userData;
-			if (wrapper != null) {
-				wrapper.mScale = 1;
-				//wrapper.mRotation = 0;
-				wrapper.mNeedDraw = true;
+			if (calcOk) {
+				calcIndex = (calcIndex + 1) % exampleCalculations.Count;
+				// show next calculation example
+				for (int i = 0; i < mWrappers.Count; i++) {
+					mWrappers [i].SetCalcPart (exampleCalculations[calcIndex].ElementAt (i));		
+				}
+				calcOk = false; //reset to false after successful calculation and forwarding to next calc-example
+			} else {
+				foreach (var item in mWrappers) {
+					item.RefreshSlide ();
+				}
+				foundRow = false;
+			}
+		}
+				
+
+
+		// ## Tick MathMind ##
+		// Defer all per-frame logic to each cube's wrapper.
+		public override void Tick() {
+			foreach (CubeWrapper wrapper in mWrappers) {
+				wrapper.Tick();
+			}
+			
+			//TODO Achtung, mit FindRow müssen die Cubes richtig gedreht sein - ev. FindConnected(cube) verwenden, aber von wo cube hernehmen??
+			Cube[] cubeRow = CubeHelper.FindRow (CubeSet);
+
+			if (foundRow && cubeRow.Count() == totalCubes) { //TODO Wieso doppelte Abfrage nach foundRow/cubeRow - ist das nicht ident?
+				int result = 0; 
+				bool orderOk = false;
+				CubeWrapper wCube1 = (CubeWrapper)cubeRow[0].userData;
+				CubeWrapper wCube2 = (CubeWrapper)cubeRow[1].userData;
+				CubeWrapper wCube3 = (CubeWrapper)cubeRow[2].userData;
+				CubeWrapper wCube4 = (CubeWrapper)cubeRow[3].userData;
+				CubeWrapper wCube5 = (CubeWrapper)cubeRow[4].userData;
+				CubeWrapper wCube6 = (CubeWrapper)cubeRow[5].userData;
+				
+				//check order/sequence - cube2 and cube 4 always have to be type Operator
+				orderOk = wCube2.CalcPart.Type == CalculationPartType.OPERATOR && wCube4.CalcPart.Type == CalculationPartType.OPERATOR &&
+				wCube1.CalcPart.Type == CalculationPartType.NUMBER && wCube3.CalcPart.Type == CalculationPartType.NUMBER &&
+				wCube5.CalcPart.Type == CalculationPartType.NUMBER && wCube6.CalcPart.Type == CalculationPartType.RESULT;
+
+				if (orderOk) {
+					result = calcResult(wCube1.CalcPart.ImageName, getOperator(wCube2.CalcPart.ImageName), 
+							wCube3.CalcPart.ImageName, getOperator(wCube4.CalcPart.ImageName), wCube5.CalcPart.ImageName);
+					
+					if (result == Int32.Parse (wCube6.CalcPart.ImageName.Substring (3, 2))) { //HARDCODED because of filename
+						foreach (var item in mWrappers) {
+							item.DrawResult (true);
+						}
+						calcOk = true;
+					} else {
+						foreach (var item in mWrappers) {
+							item.DrawResult (false);
+						}
+						calcOk = false;
+					}
+				} 
+				else {
+					foreach (var item in mWrappers) {
+						item.DrawResult (false);
+					}
+					calcOk = false;
+				}
+				
 			}
 
-			wrapper = (CubeWrapper)cube2.userData;
-			if (wrapper != null) {
-				wrapper.mScale = 1;
-				//wrapper.mRotation = 0;
-				wrapper.mNeedDraw = true;
+		}
+
+		
+		
+		// ## getOperator ##
+		// Converts operator-filename to arithmetic operator
+		private string getOperator(String imagename)
+		{
+			switch (imagename) 
+			{
+				case "addop":
+					return "+";
+				case "subop":
+					return "-";
+				case "multop":
+					return "*";
+				case "divop":
+					return "/";
+				default:
+					break;
 			}
+			return "Operator not found";
 		}
 
 
-		// CHRIS calcResult TODO adapt because of wrapper; check if it needs to go in wrapper class or stay here
-		private int calcResult(string firstOperand, string firstOperator, string secondOperand, string secondOperator, string thirdOperand) {
-			int firstIntOperand = int.Parse (firstOperand);
-			int secondIntOperand = int.Parse (secondOperand);
-			int thirdIntOperand = int.Parse (thirdOperand);
+		// ## calcResult ##
+		// Calculates the actual result according to the current cube-sequence
+		private int calcResult(string firstNumber, string firstOperator, string secondNumber, string secondOperator, string thirdNumber) {
+			int firstIntNumber = int.Parse (firstNumber);
+			int secondIntNumber = int.Parse (secondNumber);
+			int thirdIntNumber = int.Parse (thirdNumber);
 			int temp = 0;
 
-			//punkt-vor-strich-check beim secondOperator. sonst nach der reihe auswerten
-			if (secondOperator == "*" || secondOperator == "/") {
-				temp = calcNeighbors (secondIntOperand, secondOperator, thirdIntOperand);
-				temp = calcNeighbors (firstIntOperand, firstOperator, temp);
+			//punkt-vor-strich-regelung (erster Operator 'Strich', zweiter Operator 'Punkt'
+			if ((firstOperator == "+" || firstOperator == "-") && (secondOperator == "*" || secondOperator == "/")) {
+				temp = calcNeighbors (secondIntNumber, secondOperator, thirdIntNumber);
+				temp = calcNeighbors (firstIntNumber, firstOperator, temp);
 				return temp;
 			} else {
-				temp = calcNeighbors (firstIntOperand, firstOperator, secondIntOperand);
-				temp = calcNeighbors (temp, secondOperator, thirdIntOperand);
+				temp = calcNeighbors (firstIntNumber, firstOperator, secondIntNumber);
+				temp = calcNeighbors (temp, secondOperator, thirdIntNumber);
 				return temp;
 			}
 		}
 
-
-		// CHRIS calcNeighbors TODO adapt because of wrapper; check if it needs to go in wrapper class or stay here
+		// ## calcNeighbors ##
+		// Helper function for actual calculation
 		private int calcNeighbors(int first, string action, int second) {
 			if (action == "+")
 				return first + second;
@@ -216,286 +319,246 @@ namespace MathMindSpace {
 				return int.MinValue;
 		}
 
-
-		// Defer all per-frame logic to each cube's wrapper.
-		public override void Tick() {
-			foreach (CubeWrapper wrapper in mWrappers) {
-				wrapper.Tick();
-			}
-
-			//Log.Debug (calcResult(tFirstOperand,tFirstOperator,tSecondOperand,tSecondOperator,tThirdOperand).ToString());
-
-			//Log.Debug (mImageNames [0] + " " + mImageNames [1] + mImageNames [2]);
-			for (var i = 0; i < mImageNames.Length; i++) {
-				Log.Debug (mImageNames[i] + ", ");
-			}
-
-		}
-
+		
+		// ## LoadImageFolder ##
 		// ImageSet is an enumeration of your app's images. It is populated based
 		// on your app's siftbundle and index. You rarely have to interact with it
 		// directly, since you can refer to images by name.
 		//
 		// In this method, we scan the image set to build an array with the names
 		// of all the images.
-		private String[] LoadImageIndex() {
+		private void LoadImageFolder() {
 			ImageSet imageSet = this.Images;
-			ArrayList nameList = new ArrayList();
+			List<String> nameList = new List<String>();
 			foreach (ImageInfo image in imageSet) {
 				nameList.Add(image.name);
 			}
-			String[] rv = new String[nameList.Count];
-			for (int i=0; i<nameList.Count; i++) {
-				rv[i] = (string)nameList[i];
-			}
-			return rv;
+			// Public String List ImageNames that contains all the filenames of images
+			ImageNames = nameList;
 		}
-
 	}
 
 
 
 
-	// ------------------------------------------------------------------------
-	// ------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------------------------
 
 
 
-	// ## Wrapper ##
-	// "Wrapper" is not a specific API, but a pattern that is used in many Sifteo
-	// apps. A wrapper is an object that bundles a Cube object with game-specific
-	// data and behaviors.
+
+
+	// ## CalculationPartType ENUM ##
+	public enum CalculationPartType
+	{
+		NUMBER, OPERATOR, RESULT
+	}
+
+
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+	
+
+
+
+
+	/***************************************************************************************
+	 * Class CalcPart
+	 * Contains the imagename and type (number, operator, result) of the part
+	 * *************************************************************************************/
+	public class CalcPart
+	{
+		public CalcPart (string imagename, CalculationPartType type)
+		{
+			ImageName = imagename;
+			Type = type;
+		}
+
+
+		public string ImageName {
+			get;
+			set;
+		}
+
+
+		public CalculationPartType Type {
+			get;
+			set;
+		}
+	}
+
+
+
+
+
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+	/***************************************************************************************
+	 * Class CubeWrapper
+	 * "Wrapper" is not a specific API, but a pattern that is used in many Sifteo
+	 * apps. A wrapper is an object that bundles a Cube object with game-specific
+	 * data and behaviors.
+	 * *************************************************************************************/
 	public class CubeWrapper {
-
-		public MathMind mApp;
-		public Cube mCube;
+		private MathMind mApp;
+		private Cube mCube;
 		public int mIndex;
-		public int mXOffset = 0;
-		public int mYOffset = 0;
+		private int opIndex;
+		private List<String> opImages;
+		private int mXOffset = 0;
+		private int mYOffset = 0;
 		public int mScale = 1;
 		public int mRotation = 0;
-		public char mType;
-
-
-		// This flag tells the wrapper to redraw the current image on the cube. (See Tick, below).
-		public bool mNeedDraw = false;
-
-		public CubeWrapper(MathMind app, Cube cube, char type) {
+		public CalculationPartType mType = CalculationPartType.OPERATOR;
+		public int CurrentValue { get; set; }
+		public CalcPart CalcPart { get; private set; }
+		public bool mNeedDraw = false; // This flag tells the wrapper to redraw the current image on the cube. (See Tick, below).
+		
+		//Konstruktor
+		public CubeWrapper(MathMind app, Cube cube) {
 			mApp = app;
 			mCube = cube;
 			mCube.userData = this;
 			mIndex = 0;
-			mType = type;
+			opIndex = 0;
 
-			// Here we attach more event handlers for button and accelerometer actions.
+			// List of Strings of all the available operators (addop, subop, multop, divop, questop)
+			opImages = mApp.ImageNames.Where (i => i.Contains ("op")).ToList ();
+
+			// Here we attach more event handlers for button and accelerometer actions (i.e. event handlers for individual cubes/cubewrapper)
 			mCube.ButtonEvent += OnButton;
-			mCube.TiltEvent += OnTilt;
 			mCube.ShakeStartedEvent += OnShakeStarted;
 			mCube.ShakeStoppedEvent += OnShakeStopped;
-			mCube.FlipEvent += OnFlip;
 		}
 
-		// ## Button ##
+
+
+		// ## SetCalcPart ##
+		// Set up individual calc parts on a cube and prepare for print
+		public void SetCalcPart(CalcPart part)
+		{
+			CalcPart = part;
+			DrawSlide (CalcPart.ImageName);
+		}
+
+
+
+		// ## EVENT Button ##
 		// This is a handler for the Button event. It is triggered when a cube's
 		// face button is either pressed or released. The `pressed` argument
 		// is true when you press down and false when you release.
 		private void OnButton(Cube cube, bool pressed) {
-			if (pressed) {
-				if (mType == 'o') {
-					Log.Debug ("Button pressed and operator -> change operator");
+			if (pressed) 
+			{
+				//Pressed button is just relevant for the operator-cubes
+				if (CalcPart != null && CalcPart.Type == CalculationPartType.OPERATOR) {
+					opIndex = (opIndex + 1) % opImages.Count ();
+					CalcPart.ImageName = opImages.ElementAt (opIndex);
+					DrawSlide (CalcPart.ImageName);
 				}
-			} else {
-				Log.Debug("Button released");
-
-				// Advance the image index so that the next image is drawn on this
-				// cube.
-
-				//TODO wechseln von Bilder (nur wenn Operator, nur Operatur durchschalten)
-				this.mIndex += 1;
-				if (mIndex >= mApp.mImageNames.Length) {
-					mIndex = 0;
-				}
-				mRotation = 0;
-				mScale = 1;
-				mNeedDraw = true;
-
 			}
 		}
+			
+			
 
-		// ## Tilt ##
-		// This is a handler for the Tilt event. It is triggered when a cube is
-		// tilted past a certain threshold. The x, y, and z arguments are filtered
-		// values for the cube's three-axis acceleromter. A tilt event is only
-		// triggered when the filtered value changes, i.e., when the accelerometer
-		// crosses certain thresholds.
-		private void OnTilt(Cube cube, int tiltX, int tiltY, int tiltZ) {
-			Log.Debug("Tilt: {0} {1} {2}", tiltX, tiltY, tiltZ);
-
-			// If the X axis tilt reads 0, the cube is tilting to the left. <br/>
-			// If it reads 1, the cube is centered. <br/>
-			// If it reads 2, the cube is tilting to the right.
-			if (tiltX == 0) {
-				mXOffset = -8;
-			} else if (tiltX == 1) {
-				mXOffset = 0;
-			} else if (tiltX == 2) {
-				mXOffset = 8;
-			}
-
-			// If the Y axis tilt reads 0, the cube is tilting down. <br/>
-			// If it reads 1, the cube is centered. <br/>
-			// If it reads 2, the cube is tilting up.
-			if (tiltY == 0) {
-				mYOffset = 8;
-			} else if (tiltY == 1) {
-				mYOffset = 0;
-			} else if (tiltY == 2) {
-				mYOffset = -8;
-			}
-
-			// If the Z axis tilt reads 2, the cube is face up. <br/>
-			// If it reads 1, the cube is standing on a side. <br/>
-			// If it reads 0, the cube is face down.
-			if (tiltZ == 1) {
-				mXOffset *= 2;
-				mYOffset *= 2;
-			}
-
-			mNeedDraw = true;
-		}
-
-		// ## Shake Started ##
+		// ## EVENT Shake Started ##
 		// This is a handler for the ShakeStarted event. It is triggered when the
 		// player starts shaking a cube. When the player stops shaking, a
 		// corresponding ShakeStopped event will be fired (see below).
-		//
-		// Note: while a cube is shaking, it will still fire tilt and flip events
-		// as its internal accelerometer goes around and around. If your game wants
-		// to treat shaking separately from tilting or flipping, you need to add
-		// logic to filter events appropriately.
 		private void OnShakeStarted(Cube cube) {
 			Log.Debug("Shake start");
 		}
 
-		// ## Shake Stopped ##
+
+
+		// ## EVENT Shake Stopped ##
 		// This is a handler for the ShakeStarted event. It is triggered when the
 		// player stops shaking a cube. The `duration` argument tells you
 		// how long (in milliseconds) the cube was shaken.
 		private void OnShakeStopped(Cube cube, int duration) {
 			Log.Debug("Shake stop: {0}", duration);
-			mRotation = 0;
 
-			//TODO Neues Bild laden (Ziffernsturz)
+			//Shake is just possible at the result-cube
+			if (CalcPart != null && CalcPart.Type == CalculationPartType.RESULT) {
+				Log.Debug ("ImageName: " + CalcPart.ImageName);
+				char[] charArray = CalcPart.ImageName.Substring(3, 2).ToCharArray(); //HARDCODED because of filename
+				Array.Reverse( charArray );
+				string number =  new string( charArray );
+				CalcPart.ImageName = CalcPart.ImageName.Substring(0, 3) + number; //HARDCODED because of filename
+				RefreshSlide ();
+			}
 
-			mNeedDraw = true;
 		}
 
-		// ## Flip ##
-		// This is a handler for the Flip event. It is triggered when the player
-		// turns a cube face down or face up. The `newOrientationIsUp` argument
-		// tells you which way the cube is now facing.
-		//
-		// Note that when a Flip event is triggered, a Tilt event is also
-		// triggered.
-		private void OnFlip(Cube cube, bool newOrientationIsUp) {
-			if (newOrientationIsUp) {
-				Log.Debug("Flip face up");
-				mScale = 1;
-				mNeedDraw = true;
-			} else {
-				Log.Debug("Flip face down");
-				mScale = 2;
-				mNeedDraw = true;
+
+		// ## RefreshSlide ##
+		// Refreshes the slide on the cube without setting back the background
+		public void RefreshSlide()
+		{
+			if (CalcPart != null) {
+				DrawSlide (CalcPart.ImageName);
 			}
 		}
 
-		// ## Cube.Image ##
+
+		// ## DrawSlide ##
 		// This method draws the current image to the cube's display. The
-		// Cube.Image method has a lot of arguments, but many of them are optional
+		// DrawSlide method has a lot of arguments, but many of them are optional
 		// and have reasonable default values.
-		public void DrawSlide() {
-
-			// Here we specify the name of the image to draw, in this case by pulling
-			// it from the array of names we read out of the image set (see
-			// LoadImageIndex, above).
-			//
-			// When specifying the image name, leave off any file type extensions
-			// (png, gif, etc). Refer to the index file that ImageHelper generates
-			// during asset conversion.
-			//
-			// If you specify an image name that is not in the index, the Image call
-			// will be ignored.
-			String imageName = this.mApp.mImageNames[this.mIndex];
-
-			// You can specify the top/left point on the screen to start drawing at.
+		public void DrawSlide(String imageName) {
 			int screenX = mXOffset;
 			int screenY = mYOffset;
-
-			// You can draw a portion of an image by specifying coordinates to start
-			// reading from (top/left). In this case, we're just going to draw the
-			// whole image every time.
 			int imageX = 0;
 			int imageY = 0;
-
-			// You should always specify the width and height of the image to be
-			// drawn. If you specify values that are less than the size of the image,
-			// only the portion you specify will be drawn. If you specify values
-			// larger than the image, the behavior is undefined (so don't do that).
-			//
-			// In this example, we assume that the image is 128x128, big enough to
-			// cover the full size of the display. If the image runs off the sides of
-			// the display (because of offsets due to tilting; see OnTilt, above), it
-			// will be clipped.
 			int width = 128;
 			int height = 128;
-
-			// You can upscale an image by integer multiples. A scaled image still
-			// starts drawing at the specified top/left point, but the area of the
-			// display it covers (width/height) will be multipled by the scale.
-			//
-			// The default value is 1 (1:1 scale).
 			int scale = mScale;
-
-			// You can rotate an image by quarters. The rotation value is an integer
-			// representing counterclockwise rotation.
-			//
-			// * 0 = no rotation
-			// * 1 = 90 degrees counterclockwise
-			// * 2 = 180 degrees
-			// * 3 = 90 degrees clockwise
-			//
-			// A rotated image still starts drawing at the specified top/left point;
-			// the pixels are just drawn in rotated order.
-			//
-			// The default value is 0 (no rotation).
 			int rotation = mRotation;
 
 			// Clear off whatever was previously on the display before drawing the new image.
-			mCube.FillScreen(Color.Black);
-
-			mCube.Image(imageName, screenX, screenY, imageX, imageY, width, height, scale, rotation);
-
-			// Remember: always call Paint if you actually want to see anything on the cube's display.
+			mCube.FillScreen(Color.White);
+			if (CalcPart != null) {
+				mCube.Image(CalcPart.ImageName, screenX, screenY, imageX, imageY, width, height, scale, rotation);
+			}
 			mCube.Paint();
 		}
+		
+	
 
+		// ## DrawResult ##
+		// Paints the background either green or red, depending on the result of the user's calculation
+		public void DrawResult(bool success)
+		{
+			if (success) {
+				mCube.FillScreen(new Color (0, 255, 0)); //grün
+			} else {
+				mCube.FillScreen (new Color (255, 0, 0)); //rot
+			}
+			if (CalcPart != null) {
+				mCube.Image(CalcPart.ImageName, 0, 0, 0, 0, 128, 128, 1, 0);
+				//Parameters imageName, screenx, screeny, imageX, imageY, width, height, scale, rotation
+			}
+			mCube.Paint ();
+		}
+
+
+		// ## Tick in CubeWrapper ##
 		// This method is called every frame by the Tick in MathMind (see above.)
 		public void Tick() {
-
 			// You can check whether a cube is being shaken at this moment by looking
 			// at the IsShaking flag.
 			if (mCube.IsShaking) {
-				mRotation = mApp.mRandom.Next(4);
 				mNeedDraw = true;
 			}
-
-			// If anyone has raised the mNeedDraw flag, redraw the image on the cube.
-			if (mNeedDraw) {
-				mNeedDraw = false;
-				DrawSlide();
-			}
 		}
-
 	}
 }
 
